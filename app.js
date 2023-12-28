@@ -3,10 +3,10 @@ const express = require('express');
 const dotenv = require('dotenv');
 const axios = require('axios');
 const mongoose = require('mongoose');
-const { JSDOM } = require('jsdom');
-const { readFileSync, writeFileSync } = require('fs');
-const { createCanvas } = require('canvas');
-const jsPDF = require('jspdf');
+// const { JSDOM } = require('jsdom');
+// const { readFileSync, writeFileSync } = require('fs');
+// const { createCanvas } = require('canvas');
+// const jsPDF = require('jspdf');
 // Connect to MongoDB
 mongoose.connect('mongodb://localhost:27017/phonepay')
   .then(() => console.log('Connected to MongoDB'))
@@ -210,31 +210,31 @@ app.get('/status/:transactionId/:merchantId/:name/:phone/:email/:amount', async 
           </div>`
       sendMail(email, "Payment Successful", "Payment Successful", htmlContent)
       // Create a virtual DOM and load HTML content
-      const dom = new JSDOM(htmlContent);
-      const document = dom.window.document;
+      // const dom = new JSDOM(htmlContent);
+      // const document = dom.window.document;
 
-      // Initialize jsPDF
-      const pdf = new jsPDF();
+      // // Initialize jsPDF
+      // const pdf = new jsPDF();
 
-      // Function to convert HTML to PDF
-      async function generatePDF() {
-        try {
-          const canvas = createCanvas(0, 0); // Create a canvas for images (size 0 for now)
-          pdf.html(document.body, {
-            canvas: canvas,
-            callback: function () {
-              const pdfData = pdf.output('arraybuffer'); // Get PDF as array buffer
-              writeFileSync('payment_receipt.pdf', Buffer.from(pdfData)); // Save PDF file
-              console.log('PDF generated and saved as payment_receipt.pdf');
-            }
-          });
-        } catch (error) {
-          console.error('Error generating PDF:', error);
-        }
-      }
+      // // Function to convert HTML to PDF
+      // async function generatePDF() {
+      //   try {
+      //     const canvas = createCanvas(0, 0); // Create a canvas for images (size 0 for now)
+      //     pdf.html(document.body, {
+      //       canvas: canvas,
+      //       callback: function () {
+      //         const pdfData = pdf.output('arraybuffer'); // Get PDF as array buffer
+      //         writeFileSync('payment_receipt.pdf', Buffer.from(pdfData)); // Save PDF file
+      //         console.log('PDF generated and saved as payment_receipt.pdf');
+      //       }
+      //     });
+      //   } catch (error) {
+      //     console.error('Error generating PDF:', error);
+      //   }
+      // }
 
-      // Call the function to generate the PDF
-      generatePDF();
+      // // Call the function to generate the PDF
+      // generatePDF();
       const url = `${process.env.REDIRECT_URL}/success`
       return res.redirect(url)
     } else {
