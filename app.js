@@ -1,7 +1,7 @@
 
 const express = require('express');
 const dotenv = require('dotenv');
-
+const axios = require('axios');
 // Load environment variables from .env file
 dotenv.config();
 
@@ -28,32 +28,59 @@ app.post('/base64',async(req,res)=>{
 
     const base64String = Buffer.from(JSON.stringify(req.body)).toString('base64');
     res.send(base64String);
+    
 })
-app.get('/checkout', async (req, res) => {
+app.get('/checkout/:amount/:name/:phone', async (req, res) => {
   try {
-    const checksum = "d7a8e4458caa6fcd781166bbdc85fec76740c18cb9baa9a4c48cf2387d554180###1";
-    const body = "ewogICJtZXJjaGFudElkIjogIlBHVEVTVFBBWVVBVCIsCiAgIm1lcmNoYW50VHJhbnNhY3Rpb25JZCI6ICJNVDc4NTA1OTAwNjgxODgxMDQiLAogICJtZXJjaGFudFVzZXJJZCI6ICJNVUlEMTIzIiwKICAiYW1vdW50IjogMTAwMDAsCiAgInJlZGlyZWN0VXJsIjogImh0dHBzOi8vd2ViaG9vay5zaXRlL3JlZGlyZWN0LXVybCIsCiAgInJlZGlyZWN0TW9kZSI6ICJSRURJUkVDVCIsCiAgImNhbGxiYWNrVXJsIjogImh0dHBzOi8vd2ViaG9vay5zaXRlL2NhbGxiYWNrLXVybCIsCiAgIm1vYmlsZU51bWJlciI6ICI5OTk5OTk5OTk5IiwKICAicGF5bWVudEluc3RydW1lbnQiOiB7CiAgICAidHlwZSI6ICJQQVlfUEFHRSIKICB9Cn0=";
+    const merchantTransactionId = crypto.randomBytes(16).toString('hex');
+    const data = {
+        merchantId: process.env.MERCHANT_ID,
+        merchantTransactionId: merchantTransactionId,
+        merchantUserId:"MUID" + Date.now(),
+        name:  req.params.name,
+        amount: req.params.amount * 100,
+        redirectUrl: process.env.REDIRECT_URL,
+        redirectMode: 'POST',
+        mobileNumber: req.params.phone,
+        paymentInstrument: {
+            type: 'PAY_PAGE'
+        }
+    };
+    const payload = JSON.stringify(data);
+    const payloadMain = Buffer.from(payload).toString('base64');
+    const keyIndex = 1;
+    const string = payloadMain + '/pg/v1/pay' + process.env.PHONEPAY_API_KEY;
+    const sha256 = crypto.createHash('sha256').update(string).digest('hex');
+    const checksum = sha256 + '###' + keyIndex;
 
-    const response = await fetch("https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay", {
-      method: "POST",
-      headers: {
-        accept: 'text/plain',
-        'Content-Type': 'application/json',
-        "X-VERIFY": checksum,
-      },
-      body: JSON.stringify(body),
+    const prod_URL = "https://api.phonepe.com/apis/hermes/pg/v1/pay"
+    const options = {
+        method: 'POST',
+        url: prod_URL,
+        headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-VERIFY': checksum
+        },
+        data: {
+            request: payloadMain
+        }
+    };
+
+    axios.request(options).then(function (response) {
+        console.log(response.data)
+        return res.redirect(response.data.data.instrumentResponse.redirectInfo.url)
+    })
+    .catch(function (error) {
+        console.error(error);
     });
-   
-    if (!response.ok) {
-      throw new Error('Failed to initiate payment');
-    }
 
-    const result = await response.json(); // Parse response body as JSON
-    console.log(result); // Log the response data
-    res.status(200).json({ message: 'success', data: result });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+} catch (error) {
+    res.status(500).send({
+        message: error.message,
+        success: false
+    })
+}
 });
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
