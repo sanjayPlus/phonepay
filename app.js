@@ -12,7 +12,8 @@ mongoose.connect('mongodb://localhost:27017/phonepay')
 const phonePaySchema = new mongoose.Schema({
   data:Object,
   name:String,
-  phone:String
+  phone:String,
+  email:String
 })
 const PhonePay = mongoose.model('PhonePay',phonePaySchema);
 // Load environment variables from .env file
@@ -21,6 +22,7 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 4222;
 const crypto = require('crypto');
+const { sendMail } = require('./userAction');
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -43,7 +45,7 @@ app.post('/base64',async(req,res)=>{
     res.send(base64String);
     
 })
-app.get('/checkout/:amount/:name/:phone', async (req, res) => {
+app.get('/checkout/:amount/:name/:phone/:email', async (req, res) => {
   try {
     const merchantTransactionId = crypto.randomBytes(16).toString('hex');
     const data = {
@@ -52,7 +54,7 @@ app.get('/checkout/:amount/:name/:phone', async (req, res) => {
         merchantUserId:"MUID" + Date.now(),
         name:  req.params.name,
         amount: req.params.amount * 100,
-        redirectUrl: process.env.REDIRECT_URL+"/status/" + merchantTransactionId+"/"+process.env.MERCHANT_ID+"/"+req.params.name+"/"+req.params.phone,
+        redirectUrl: process.env.REDIRECT_URL+"/status/" + merchantTransactionId+"/"+process.env.MERCHANT_ID+"/"+req.params.name+"/"+req.params.phone+"/"+req.params.email+"/"+req.params.amount,
         redirectMode: 'GET',
         mobileNumber: req.params.phone,
         paymentInstrument: {
@@ -95,7 +97,7 @@ app.get('/checkout/:amount/:name/:phone', async (req, res) => {
     })
 }
 });
-app.get('/payment/:amount/:name/:phone', async (req, res) => {
+app.get('/payment/:amount/:name/:phone/:email', async (req, res) => {
   try {
     const merchantTransactionId = crypto.randomBytes(16).toString('hex');
     const data = {
@@ -104,7 +106,7 @@ app.get('/payment/:amount/:name/:phone', async (req, res) => {
         merchantUserId:"MUID" + Date.now(),
         name:  req.params.name,
         amount: req.params.amount * 100,
-        redirectUrl: process.env.REDIRECT_URL+"/status/" + merchantTransactionId+"/"+process.env.MERCHANT_ID+"/"+req.params.name+"/"+req.params.phone,
+        redirectUrl: process.env.REDIRECT_URL+"/status/" + merchantTransactionId+"/"+process.env.MERCHANT_ID+"/"+req.params.name+"/"+req.params.phone+"/"+req.params.email+"/"+req.params.amount,
         redirectMode: 'GET',
         mobileNumber: req.params.phone,
         paymentInstrument: {
@@ -148,11 +150,13 @@ app.get('/payment/:amount/:name/:phone', async (req, res) => {
 }
 });
 
-app.get('/status/:transactionId/:merchantId/:name/:phone', async (req, res) => {
+app.get('/status/:transactionId/:merchantId/:name/:phone/:email/:amount', async (req, res) => {
   const merchantTransactionId = req.params.transactionId
     const merchantId = req.params.merchantId
     const  name =  req.params.name;
     const  phone =  req.params.phone;
+    const email =  req.params.email;
+    const amount = req.params.amount
     console.log(name,phone)
     const keyIndex = 1;
     const string = `/pg/v1/status/${merchantId}/${merchantTransactionId}` + process.env.PHONEPAY_API_KEY;
@@ -176,10 +180,32 @@ app.get('/status/:transactionId/:merchantId/:name/:phone', async (req, res) => {
           const phonePay = new PhonePay({
             data:response.data.data,
             name:name,
-            phone:phone
+            phone:phone,
+            email:email,
+            amount:amount
           })
           await phonePay.save()
+            sendMail(email, "Payment Successful", "Payment Successful", `<div>
+            <h1>Payment Successful</h1>
+            
+            <p>Dear ${name},</p>
 
+            <p>Thankyou for your Contribution to INTUC Thrissur</p>
+            <p>Your Payment Details</p>
+            <p>Your transaction Id is ${merchantTransactionId}</p>
+            
+            <p>Email ${name}</p>
+            <p>Amount ${amount}</p>
+            <p>Email ${email}</p>
+            <p>Phone ${phone}</p>
+
+            <p>For App Support Contact app@intucthrisssur.com </p>
+            <br>
+            <p>Sincerely,</p>
+            <p>SUNDARAN KUNATHULLY</p>
+            <p>President,INTUC THRISSUR</p>
+            </div>`)
+            
             const url = `${process.env.REDIRECT_URL}/success`
             return res.redirect(url)
         } else {
@@ -192,7 +218,7 @@ app.get('/status/:transactionId/:merchantId/:name/:phone', async (req, res) => {
     });
 })
 app.get("/success", (req, res) => {
-  res.send("Payment Successful");
+  res.redirect('https://intucthrissur.com');
 })
 app.get("/failure", (req, res) => {
   res.send("Payment Failed");
