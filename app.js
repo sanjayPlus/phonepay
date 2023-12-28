@@ -187,23 +187,23 @@ app.get('/status/:transactionId/:merchantId/:name/:phone/:email/:amount', async 
           await phonePay.save()
           const htmlContent = 
             sendMail(email, "Payment Successful", "Payment Successful", `<div>
-            <h1>Payment Successful</h1>
-            
+            <h1 style="text-align:center">Payment Successful</h1>
+            <br>
             <p>Dear ${name},</p>
-
+            <br>
             <p>Thankyou for your Contribution to INTUC Thrissur</p>
             <p>Your Payment Details</p>
+            <br>
             <p>Your transaction Id is ${merchantTransactionId}</p>
-            
             <p>Email ${name}</p>
             <p>Amount ${amount}</p>
             <p>Email ${email}</p>
             <p>Phone ${phone}</p>
-
+                <br>
             <p>For App Support Contact app@intucthrisssur.com </p>
             <br>
             <p>Sincerely,</p>
-            <p>SUNDARAN KUNATHULLY</p>
+            <p>SUNDARAN KUNNATHULLY</p>
             <p>President,INTUC THRISSUR</p>
             </div>`)
 

@@ -34,9 +34,7 @@ async function sendMail(to, subject, text, html) {
       <head>
         <style>
           .container {
-            display: grid;
-            
-            text-align: center;
+       
             width: 100%;
             height: max-content;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
