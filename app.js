@@ -121,7 +121,7 @@ app.get('/payment/:amount/:name/:phone', async (req, res) => {
 
     axios.request(options).then(function (response) {
         console.log(response.data)
-        return res.status(200).json(response.data.data.instrumentResponse.redirectInfo.url);
+        return res.status(200).json({url:response.data.data.instrumentResponse.redirectInfo.url});
     })
     .catch(function (error) {
         console.error(error);
