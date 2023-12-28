@@ -53,7 +53,7 @@ app.get('/checkout/:amount/:name/:phone', async (req, res) => {
         name:  req.params.name,
         amount: req.params.amount * 100,
         redirectUrl: process.env.REDIRECT_URL+"/status/" + merchantTransactionId+"/"+process.env.MERCHANT_ID+"/"+req.params.name+"/"+req.params.phone,
-        redirectMode: 'POST',
+        redirectMode: 'GET',
         mobileNumber: req.params.phone,
         paymentInstrument: {
             type: 'PAY_PAGE'
@@ -105,7 +105,7 @@ app.get('/payment/:amount/:name/:phone', async (req, res) => {
         name:  req.params.name,
         amount: req.params.amount * 100,
         redirectUrl: process.env.REDIRECT_URL+"/status/" + merchantTransactionId+"/"+process.env.MERCHANT_ID+"/"+req.params.name+"/"+req.params.phone,
-        redirectMode: 'POST',
+        redirectMode: 'GET',
         mobileNumber: req.params.phone,
         paymentInstrument: {
             type: 'PAY_PAGE'
@@ -179,7 +179,7 @@ app.get('/status/:transactionId/:merchantId/:name/:phone', async (req, res) => {
             phone:phone
           })
           await phonePay.save()
-            
+
             const url = `${process.env.REDIRECT_URL}/success`
             return res.redirect(url)
         } else {
